@@ -4,7 +4,7 @@ from openai import OpenAI
 from datetime import datetime
 import json
 
-from requests import delete
+
 from streamlit import session_state
 
 st.set_page_config(
@@ -77,7 +77,6 @@ def delete_session(session_name):
             st.error(f"删除会话失败：{e}")
 
 
-
 #大标题
 st.title("AI健身私教")
 
@@ -112,10 +111,10 @@ system_prompt ="""
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-#昵称
+#教练昵称
 if "nick_name" not in st.session_state:
     st.session_state.nick_name = "铁教练"
-#性格
+#教学风格
 if "nature" not in st.session_state:
     st.session_state.nature = "专业严谨、充满激情、注重科学训练方法的资深健身教练"
 #会话的标识
@@ -125,11 +124,6 @@ if "current_session" not in st.session_state:
 st.text(f"会话名称：{st.session_state.current_session}")
 for message in st.session_state.messages:#{"role": "user", "content": prompt}
     st.chat_message(message["role"]).write(message["content"])
-    # if message["role"] == "user":
-    #     st.chat_message("user").write(message["content"])
-    # else:
-    #     st.chat_message("assistant").write(message["content"])
-
 
 
 # 创建与AI大模型交互的客户端对象（DEEPSEEK_API_KEY 环境变量的名字，值就是Deepseek的API_KEY的值）
@@ -138,13 +132,11 @@ client = OpenAI(
     base_url="https://api.deepseek.com")
 
 #左侧的侧边栏 -with:streamlit中上下文管理
-# st.sidebar.subheader("伴侣信息")
-# nick_name = st.sidebar.text_input("昵称")
 with st.sidebar:
     #会话信息✏️
     st.subheader("训练控制台")
 
-#新建会话
+    #新建会话
     if st.button("新建会话",width="stretch",icon="✏️"):
         #1.保存当前会话信息
         save_session()
@@ -156,7 +148,7 @@ with st.sidebar:
             save_session()
             st.rerun ()#刷新页面
 
-#会话历史
+    #会话历史
     st.text("会话历史")
 
     session_list = load_session_list()
@@ -199,12 +191,6 @@ if prompt:#字符串自动转换为布尔值，如果字符串不为空，则返
     #添加用户输入的提示词
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    #调用AI大模型
-    # print([
-    #     {"role": "system", "content": system_prompt},
-    #     *st.session_state.messages,
-    # ])
-
 
     # 与AI大模型进行交互
     response = client.chat.completions.create(
@@ -216,9 +202,6 @@ if prompt:#字符串自动转换为布尔值，如果字符串不为空，则返
         stream=True,
     )
     # 输出大模型返回的结果
-    #非流式输出的解析方式
-    # print("<----------- 大模型返回结果： ", response.choices[0].message.content)
-    # st.chat_message("assistant").write(response.choices[0].message.content)
 
     #流失输出的解析方式
     response_message = st.empty()#创建一个空的组件，用于显示大模型返回的结果
@@ -228,10 +211,6 @@ if prompt:#字符串自动转换为布尔值，如果字符串不为空，则返
             content = chunk.choices[0].delta.content#一个字或者一个词
             full_response += content
             response_message.chat_message("assistant").write(full_response)
-
-
-    # #添加大模型返回的答案
-    # st.session_state.messages.append({"role": "assistant", "content": response.choices[0].message.content})#非流式
 
 
     # 添加大模型返回的答案
